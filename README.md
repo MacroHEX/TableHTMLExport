@@ -1,51 +1,33 @@
-# TableHTMLExport V2.0.0
-Plugin de *Jquery* que exporta una tabla HTML a JSON, CSV, TXT, o PDF y forzar al navegador a descargar el archivo generado.
 
-*Jquery* plugin that exports an HTML table to JSON, CSV, TXT, or PDF and force the browser to download the generated file.
+# TableHTMLExport V3.0.0
 
-## Requsitos | Requirements
- - [Jquery](https://jquery.com/) 
-   
- 
- 
-## Instalacion | Install
+A jQuery plugin that exports an HTML table to JSON, CSV, TXT, or PDF and forces the browser to download the generated file.
 
-Puede descargar el archivo *tableHTMLExport.js* que esta en la carpeta *src* de este repositorioo o utilizar el CDN
+## Requirements
+- [jQuery](https://jquery.com/)
 
-You can download the *tableHTMLExport.js* file that is in the *src* folder of this repository or use the CDN
+## Installation
 
-### CDN
-```html
-<script src="https://rawcdn.githack.com/FuriosoJack/TableHTMLExport/v2.0.0/src/tableHTMLExport.js"></script>
-```
-
-## Opciones 
-
-- type: Opcion(string) para especificar el tipo de exportacion (csv,txt,json,pdf)
-- separator: Opcion(string) que sera util solo cuando se exportar a *csv* en donde se especifica el caracter que servira como separador entre columnas *default: ,*
-- newline: Opcion(string) que sera util solo cuando se exportar a *csv* en donde se especifica los caracteres para una nueva linea *default: \r\n*
-- ignoreColumns: Opcion(string) para especificar el con los selectores de css de las columnas que se ignoraran *default: ''*
-- ignoreRows: Opcion(string) para especificar los selectores de css de las columnas que se ignoraran *default: ''*
-- htmlContent: Opcion(bool) para indicar si el contenido de la tabla a exportar tiene codigo HTML *default: false*
-- consoleLog: Opcion(bool) para indicar si se quiere que se vean los logs del proceso de exportacion *default: false*
-- trimContent: Opcion(bool) que sera util solo cuando se exporta a *csv* y la cual recorta el contenido de las etiquetas individuales *\<th>*, *\<td>*  de los espacios en blanco. Esto producirá una salida válida incluso si la tabla está sangrada *default: true*
-- quoteFields Opcion(bool) que sera util solo cuando se exporta a *csv* y la cual cita campos *default: true*.
-- filename: Opcion(string) nombre con el que el archivo se va a guardar *default: tableHTMLExport.csv*
+You can download the *tableHTMLExport.js* file from the *src* folder of this repository.
 
 ## Options
-- type: Option (string) to specify the type of export (csv, txt, json, pdf)
-- separator: Option (string) that will be useful only when exporting to *csv* where the character that will serve as separator between columns is specified *default: ,*
-- newline: Option (string) that will be useful only when exporting to *csv* where the characters are specified for a new line *default: \r\n*
-- ignoreColumns: Option (string) to specify the with the css selectors of the columns that will be ignored *default: ''*
-- ignoreRows: Option (string) to specify the css selectors of the columns to be ignored *default:''*
-- htmlContent: Option (bool) to indicate if the content of the table to be exported has HTML code *default:false*
-- consoleLog: Option (bool) to indicate if you want to see the logs of the export process *default: false*
-- trimContent: Option (bool) that will be useful only when exported to * csv * and which trims the contents of the individual tags *\<th>*, *\<td>* of the blanks. This will produce a valid output even if the table is indented. *default: true*
-- quoteFields Option (bool) that will be useful only when exported to * csv * and which cites fields *default: true*.
-- filename: Option (string) name with which the file is to be saved *default: tableHTMLExport.csv*
 
-# Ejemplos | Examples
+- `type`: String. Specifies the export type (csv, txt, json, pdf). Default: 'csv'.
+- `separator`: String. Character used as a separator between columns when exporting to CSV. Default: '|'.
+- `newline`: String. Characters used for a new line when exporting to CSV. Default: '\r\n'.
+- `ignoreColumns`: String. CSS selectors of columns to be ignored. Default: ''.
+- `ignoreRows`: String. CSS selectors of rows to be ignored. Default: 'no'.
+- `htmlContent`: Boolean. Indicates if the table to be exported contains HTML code. Default: false.
+- `consoleLog`: Boolean. Toggles the visibility of the export process logs. Default: false.
+- `trimContent`: Boolean. Trims the content of the individual tags `<th>`, `<td>` of whitespace for CSV export. Default: true.
+- `quoteFields`: Boolean. Indicates whether fields should be quoted when exported to CSV. Default: false.
+- `filename`: String. The name of the file to be saved. Default: 'tableHTMLExport.csv'.
+- `utf8`: Boolean. Adds a UTF-8 Byte Order Mark (BOM) for CSV export. Default: true.
+- `orientation`: String. Page orientation for PDF export ('p' for portrait, 'l' for landscape). Default: 'p'.
 
+## Examples
+
+### Example HTML Table
 
 ```html
 <table id="tableCompany">
@@ -81,66 +63,27 @@ You can download the *tableHTMLExport.js* file that is in the *src* folder of th
 </table>
 ```
 
-
-## Exportar a JSON | Export To JSON
-
-[Ejemplo Funcional | Functional Example](https://codepen.io/furiosojack/pen/JmyExX?editors=1111)
+### Export to JSON
 
 ```javascript
-$("#tableCompany").tableHTMLExport({type:'json',filename:'tablaLicencias.json',ignoreColumns:'.acciones,#primero',ignoreRows: '#ultimo'});
+$("#tableCompany").tableHTMLExport({type: 'json', filename: 'tableLicenses.json', ignoreColumns: '.actions,#first', ignoreRows: '#last'});
 ```
 
-Resultado: tablaLicencias.json
-```json
-{
-  "header": [
-    "Company",
-    "Contact"
-  ],
-  "data": [
-    [
-      "Alfreds Futterkiste"
-    ],
-    [
-      "Ernst Handel",
-      "Roland Mendel"
-    ],
-    [
-      "Island Trading",
-      "Helen Bennett",
-      "UK"
-    ]
-  ]
-}
-
-```
-## Exportar a CSV | Export To CSV
+### Export to CSV
 
 ```javascript
-$("#tableCompany").tableHTMLExport({type:'csv',filename:'tablaLicencias.csv',ignoreColumns:'.acciones,#primero',ignoreRows: '#ultimo'});
-```
-Resultado: 
-```csv
-"Company","Contact"
-"Alfreds Futterkiste","Ernst Handel","Roland Mendel"
-"Island Trading","Helen Bennett"
-"UK",
+$("#tableCompany").tableHTMLExport({type: 'csv', filename: 'tableLicenses.csv', ignoreColumns: '.actions,#first', ignoreRows: '#last'});
 ```
 
-## Exportar a PDF | Export To PDF
-[Ejemplo Funcional | Functional Example ](https://codepen.io/furiosojack/pen/gBxmvQ?editors=1111) 
+### Export to PDF
 
-Para exportar a PDF es requerido la libreria [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable)
-To export to PDF the library is required [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable)
+To export to PDF, the [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) library is required.
 
 ```javascript
-$("#tableCompany").tableHTMLExport({type:'pdf',filename:'tablaLicencias.pdf',ignoreColumns:'.acciones,#primero',ignoreRows: '#ultimo'});
+$("#tableCompany").tableHTMLExport({type: 'pdf', filename: 'tableLicenses.pdf', ignoreColumns: '.actions,#first', ignoreRows: '#last'});
 ```
 
-Resultado | Result:  
-![alt text][exporPDF]
+## Notes
 
-[exporPDF]: https://image.ibb.co/kZvgB9/Captura.png "Como ser ve la exportacion PDF"
-
-
-
+- When exporting to PDF, ensure the jsPDF-AutoTable library is included in your project.
+- The plugin throws an error if the target element is not a `<table>` or if multiple tables are targeted at once.

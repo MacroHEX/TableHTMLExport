@@ -20,194 +20,138 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.*/
 
-(function($){
+(($) => {
 
+  // ::: methods
+  //
+  $.fn.tableHTMLExport = function (options) {
 
+    // ::: Default settings
+    const defaults = {
+      separator: '|',
+      newline: '\r\n',
+      ignoreColumns: '',
+      ignoreRows: 'no',
+      type: 'csv',
+      htmlContent: false,
+      consoleLog: false,
+      trimContent: true,
+      quoteFields: false,
+      filename: 'tableHTMLExport.csv',
+      utf8: true,
+      orientation: 'p' // 'p' for portrait, 'l' for landscape
+    };
+    options = $.extend(defaults, options);
 
-    $.fn.extend({
-        tableHTMLExport: function(options) {
+    // ::: Function to quote fields
+    const quote = (text) => `"${text.replace('"', '""')}"`;
 
-            var defaults = {
-                separator: ',',
-                newline: '\r\n',
-                ignoreColumns: '',
-                ignoreRows: '',
-                type:'csv',
-                htmlContent: false,
-                consoleLog: false,
-                trimContent: true,
-                quoteFields: true,
-                filename: 'tableHTMLExport.csv',
-                utf8BOM: true,
-                orientation: 'p' //only when exported to *pdf* "portrait" or "landscape" (or shortcuts "p" or "l")
-            };
-            var options = $.extend(defaults, options);
+    // ::: Parse HTML or text content
+    const parseString = (data) => {
+      return options.htmlContent ? data.html().trim() : data.text().trim();
+    };
 
+    // ::: Function to initiate download
+    const download = (filename, text) => {
+      const element = document.createElement('a');
+      element.href = `data:text/csv;charset=utf-8,${encodeURIComponent(text)}`;
+      element.download = filename;
 
-            function quote(text) {
-                return '"' + text.replace('"', '""') + '"';
-            }
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    };
 
+    // ::: Convert table to JSON format
+    const toJson = (el) => {
+      const jsonHeaderArray = [];
+      $(el).find('thead').find('tr').not(options.ignoreRows).each(function () {
+        const jsonArrayTd = $(this).find('th').not(options.ignoreColumns)
+          .filter(function () {
+            return $(this).css('display') !== 'none';
+          })
+          .map(function () {
+            return parseString($(this));
+          })
+          .get();
+        jsonHeaderArray.push(jsonArrayTd);
+      });
 
-            function parseString(data){
+      const jsonArray = [];
+      $(el).find('tbody').find('tr').not(options.ignoreRows).each(function () {
+        const jsonArrayTd = $(this).find('td').not(options.ignoreColumns)
+          .filter(function () {
+            return $(this).css('display') !== 'none';
+          })
+          .map(function () {
+            return parseString($(this));
+          })
+          .get();
+        jsonArray.push(jsonArrayTd);
+      });
 
-                if(defaults.htmlContent){
-                    content_data = data.html().trim();
-                }else{
-                    content_data = data.text().trim();
-                }
-                return content_data;
-            }
+      return {header: jsonHeaderArray[0], data: jsonArray};
+    };
 
-            function download(filename, text) {
-                var element = document.createElement('a');
-                element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(text));
-                element.setAttribute('download', filename);
+    // ::: Convert table to CSV format
+    const toCsv = (table) => {
+      let output = options.utf8 ? '\ufeff' : '';
 
-                element.style.display = 'none';
-                document.body.appendChild(element);
+      const rows = table.find('tr').not(options.ignoreRows);
+      const numCols = rows.first().find("td,th").not(options.ignoreColumns).length;
 
-                element.click();
+      rows.each(function () {
+        $(this).find("td").not(options.ignoreColumns).each((i, col) => {
+          const content = options.trimContent ? $.trim($(col).text()) : $(col).text();
+          output += options.quoteFields ? quote(content) : content;
+          output += i !== numCols - 1 ? options.separator : options.newline;
+        });
+      });
 
-                document.body.removeChild(element);
-            }
+      return output;
+    };
 
-            /**
-             * Convierte la tabla enviada a json
-             * @param el
-             * @returns {{header: *, data: Array}}
-             */
-            function toJson(el){
+    const el = this;
+    let dataOutput;
 
-                var jsonHeaderArray = [];
-                $(el).find('thead').find('tr').not(options.ignoreRows).each(function() {
-                    var tdData ="";
-                    var jsonArrayTd = [];
+    // ::: Switch to handle export type
+    switch (options.type) {
+      case 'csv':
+      case 'txt':
+        const table = this.filter('table');
+        if (table.length <= 0) throw new Error('tableHTMLExport must be called on a <table> element');
+        if (table.length > 1) throw new Error('converting multiple table elements at once is not supported yet');
 
-                    $(this).find('th').not(options.ignoreColumns).each(function(index,data) {
-                        if ($(this).css('display') != 'none'){
-                            jsonArrayTd.push(parseString($(this)));
-                        }
-                    });
-                    jsonHeaderArray.push(jsonArrayTd);
+        dataOutput = toCsv(table);
+        if (options.consoleLog) console.log(dataOutput);
+        download(options.filename, dataOutput);
+        break;
 
-                });
+      case 'json':
+        const jsonExportArray = toJson(el);
+        if (options.consoleLog) console.log(JSON.stringify(jsonExportArray));
+        dataOutput = JSON.stringify(jsonExportArray);
+        download(options.filename, dataOutput);
+        break;
 
-                var jsonArray = [];
-                $(el).find('tbody').find('tr').not(options.ignoreRows).each(function() {
-                    var tdData ="";
-                    var jsonArrayTd = [];
+      case 'pdf':
+        const jsonPdfData = toJson(el);
+        const contentJsPdf = {
+          head: [jsonPdfData.header],
+          body: jsonPdfData.data
+        };
+        if (options.consoleLog) console.log(contentJsPdf);
 
-                    $(this).find('td').not(options.ignoreColumns).each(function(index,data) {
-                        if ($(this).css('display') != 'none'){
-                            jsonArrayTd.push(parseString($(this)));
-                        }
-                    });
-                    jsonArray.push(jsonArrayTd);
+        const doc = new jsPDF(options.orientation, 'pt');
+        doc.autoTable(contentJsPdf);
+        doc.save(options.filename);
+        break;
 
-                });
+      default:
+        throw new Error('Unsupported export type');
+    }
 
+    return this;
+  };
 
-                return {header:jsonHeaderArray[0],data:jsonArray};
-            }
-
-
-            /**
-             * Convierte la tabla enviada a csv o texto
-             * @param table
-             * @returns {string}
-             */
-            function toCsv(table){
-                var output = "";
-                
-                if (options.utf8BOM === true) {                
-                    output += '\ufeff';
-                }
-
-                var rows = table.find('tr').not(options.ignoreRows);
-
-                var numCols = rows.first().find("td,th").not(options.ignoreColumns).length;
-
-                rows.each(function() {
-                    $(this).find("td,th").not(options.ignoreColumns)
-                        .each(function(i, col) {
-                            var column = $(col);
-
-                            // Strip whitespaces
-                            var content = options.trimContent ? $.trim(column.text()) : column.text();
-
-                            output += options.quoteFields ? quote(content) : content;
-                            if(i !== numCols-1) {
-                                output += options.separator;
-                            } else {
-                                output += options.newline;
-                            }
-                        });
-                });
-
-                return output;
-            }
-
-
-            var el = this;
-            var dataMe;
-            if(options.type == 'csv' || options.type == 'txt'){
-
-
-                var table = this.filter('table'); // TODO use $.each
-
-                if(table.length <= 0){
-                    throw new Error('tableHTMLExport must be called on a <table> element')
-                }
-
-                if(table.length > 1){
-                    throw new Error('converting multiple table elements at once is not supported yet')
-                }
-
-                dataMe = toCsv(table);
-
-                if(defaults.consoleLog){
-                    console.log(dataMe);
-                }
-
-                download(options.filename,dataMe);
-
-
-                //var base64data = "base64," + $.base64.encode(tdData);
-                //window.open('data:application/'+defaults.type+';filename=exportData;' + base64data);
-            }else if(options.type == 'json'){
-
-                var jsonExportArray = toJson(el);
-
-                if(defaults.consoleLog){
-                    console.log(JSON.stringify(jsonExportArray));
-                }
-                dataMe = JSON.stringify(jsonExportArray);
-
-                download(options.filename,dataMe)
-                /*
-                var base64data = "base64," + $.base64.encode(JSON.stringify(jsonExportArray));
-                window.open('data:application/json;filename=exportData;' + base64data);*/
-            }else if(options.type == 'pdf'){
-
-                var jsonExportArray = toJson(el);
-
-                var contentJsPdf = {
-                    head: [jsonExportArray.header],
-                    body: jsonExportArray.data
-                };
-
-                if(defaults.consoleLog){
-                    console.log(contentJsPdf);
-                }
-
-                var doc = new jsPDF(defaults.orientation, 'pt');
-                doc.autoTable(contentJsPdf);
-                doc.save(options.filename);
-
-            }
-            return this;
-        }
-    });
 })(jQuery);
-
